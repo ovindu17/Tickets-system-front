@@ -1,10 +1,10 @@
-// src/AdminRegister.js
+// src/BuyerRegister.js
 import React from 'react';
 import AuthForm from './components/AuthForm';
 
-function AdminRegister() {
+function BuyerRegister() {
     const handleRegister = async ({ username, password }) => {
-        const response = await fetch('http://localhost:8080/admins/register', {
+        const response = await fetch('http://localhost:8080/buyers/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -17,7 +17,7 @@ function AdminRegister() {
         }
     };
 
-    return <AuthForm type="register" title="Admin Register" onSubmit={handleRegister} />;
+    return <AuthForm type="register" title="Buyer Register" onSubmit={handleRegister} />;
 }
 
-export default AdminRegister;
+export default BuyerRegister;
