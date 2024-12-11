@@ -21,28 +21,37 @@ function AdminSettings() {
         }
         setValidationMessage('');
 
-        const response = await fetch(`http://localhost:8080/admins/${adminId}/updateRates`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                maxTickets: parseInt(maxTickets),
-                releaseRate: parseInt(releaseRate),
-                buyingRate: parseInt(buyingRate),
-                ticketPrice: parseInt(ticketPrice),
-            }),
-        });
+        try {
+            const response = await fetch(`http://localhost:8080/settings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    maxTickets: parseInt(maxTickets),
+                    releaseRate: parseInt(releaseRate),
+                    buyingRate: parseInt(buyingRate),
+                    ticketPrice: parseInt(ticketPrice),
+                    adminId: parseInt(adminId),
 
-        if (!response.ok) {
-            throw new Error('Failed to update admin settings');
+                }),
+            });
+
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                throw new Error(`Failed to update admin settings: ${errorMessage}`);
+            }
+
+            console.log('Admin settings updated successfully');
+            console.log(adminId)    ;
+        } catch (error) {
+            console.error(error.message);
+            setValidationMessage(error.message);
         }
-
-        console.log('Admin settings updated successfully');
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
+        <div className="container">
             <h2 style={{ textAlign: 'center' }}>Admin Settings</h2>
             <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                 <InputField

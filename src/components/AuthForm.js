@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import Button from './Button';
 import InputField from './InputField';
+import '../styles.css';
+
 
 function AuthForm({ type,title, onSubmit }) {
     const [username, setUsername] = useState('');
@@ -23,7 +25,7 @@ function AuthForm({ type,title, onSubmit }) {
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
+        <div className="container">
             <h2 style={{ textAlign: 'center' }}>{title}</h2>
             <form onSubmit={handleSubmit}>
                 <InputField

@@ -2,6 +2,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from './components/AuthForm';
+import './styles.css';
+
 
 function AdminLogin() {
     const navigate = useNavigate();
@@ -21,7 +23,7 @@ function AdminLogin() {
 
         const data = await response.json();
         const adminId = data.id; // Assuming the response contains the admin ID
-
+        console.log(adminId);
         navigate('/admin/dashboard', { state: { adminId } });
     };
 
