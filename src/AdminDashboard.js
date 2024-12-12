@@ -19,9 +19,32 @@ function AdminDashboard() {
         }]
     });
     const [transactions, setTransactions] = useState([]);
+    const [username, setUsername] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
     const adminId = location.state?.adminId;
+
+    useEffect(() => {
+        if (!adminId) {
+            navigate('/admin/login');
+            return;
+        }
+
+        const fetchUsername = async () => {
+            try {
+                const response = await fetch(`http://localhost:8080/admins/${adminId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch username');
+                }
+                const data = await response.json();
+                setUsername(data.username);
+            } catch (error) {
+                console.error('Error fetching username:', error);
+            }
+        };
+
+        fetchUsername();
+    }, [adminId, navigate]);
 
     useEffect(() => {
         const fetchTransactions = async () => {
@@ -101,6 +124,7 @@ function AdminDashboard() {
                     userType: 'admin',
                     ticketNo: parseInt(ticketsToRelease),
                     action: 'released',
+                    username: username,
                 }),
             });
 
@@ -117,9 +141,18 @@ function AdminDashboard() {
         }
     };
 
+    const handleLogout = () => {
+        navigate('/admin/login');
+    };
+
     return (
-        <div className="container">
+        <div className="container2">
             <h2 style={{ textAlign: 'center' }}>Admin Dashboard</h2>
+            <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                <Button onClick={handleLogout} className="primary">
+                    Logout
+                </Button>
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div style={{ flex: 1 }}>
                     <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -167,7 +200,7 @@ function AdminDashboard() {
                     <div className="transaction-history">
                         {transactions.map((transaction, index) => (
                             <div key={index}>
-                                <strong>{transaction.userType}</strong>: {transaction.ticketNo} tickets {transaction.action}
+                                <strong>{transaction.userType}</strong>: {transaction.ticketNo} tickets {transaction.action} {transaction.username}
                             </div>
                         ))}
                     </div>

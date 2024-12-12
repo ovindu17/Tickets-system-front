@@ -1,51 +1,121 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import InputField from './components/InputField';
 import Button from './components/Button';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 function BuyerDashboard() {
     const [ticketsToBuy, setTicketsToBuy] = useState('');
     const [totalCost, setTotalCost] = useState(null);
     const [validationMessage, setValidationMessage] = useState('');
-    const ticketPrice = 50;
+    const [chartData, setChartData] = useState({
+        labels: ['Unsold Tickets', 'Sold Tickets'],
+        datasets: [{
+            data: [0, 0],
+            backgroundColor: ['#FF6384', '#36A2EB'],
+            hoverBackgroundColor: ['#FF6384', '#36A2EB']
+        }]
+    });
+    const [username, setUsername] = useState('');
+    const [ticketPrice, setTicketPrice] = useState(50); // Default ticket price
 
     const navigate = useNavigate();
     const location = useLocation();
     const buyerId = location.state?.buyerId;
 
+    useEffect(() => {
+        if (!buyerId) {
+            navigate('/buyer/login');
+            return;
+        }
+
+        const fetchChartData = async () => {
+            try {
+                const settingsResponse = await fetch('http://localhost:8080/settings/latest');
+                if (!settingsResponse.ok) {
+                    throw new Error('Failed to fetch the latest settings');
+                }
+                const settingsData = await settingsResponse.json();
+                setTicketPrice(settingsData.ticketPrice);
+                console.log(settingsData.ticketPrice)//; Set ticket price from settings
+
+                const transactionsResponse = await fetch('http://localhost:8080/transactions/totals');
+                if (!transactionsResponse.ok) {
+                    throw new Error('Failed to fetch the total released tickets');
+                }
+                const transactionsData = await transactionsResponse.json();
+                const totalSold = transactionsData.sold;
+                const totalReleased = transactionsData.released;
+
+                setChartData({
+                    labels: ['Unsold Tickets', 'Sold Tickets'],
+                    datasets: [{
+                        data: [totalReleased, totalSold],
+                        backgroundColor: ['#FF6384', '#36A2EB'],
+                        hoverBackgroundColor: ['#FF6384', '#36A2EB']
+                    }]
+                });
+            } catch (error) {
+                console.error('Error fetching chart data:', error);
+            }
+        };
+
+        fetchChartData();
+        const interval = setInterval(fetchChartData, 5000);
+
+        return () => clearInterval(interval);
+    }, [buyerId, navigate]);
+
+    useEffect(() => {
+        const fetchUsername = async () => {
+            try {
+                const response = await fetch(`http://localhost:8080/buyers/${buyerId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch username');
+                }
+                const data = await response.json();
+                setUsername(data.username);
+            } catch (error) {
+                console.error('Error fetching username:', error);
+            }
+        };
+
+        if (buyerId) {
+            fetchUsername();
+        }
+    }, [buyerId]);
+
     const handleShowCost = () => {
-        const cost = ticketsToBuy * ticketPrice;
+        const cost = ticketsToBuy * Number(ticketPrice);
         setTotalCost(cost);
     };
 
     const handleBuyTickets = async () => {
         try {
-            // Fetch the total number of unsold tickets
             const settingsResponse = await fetch('http://localhost:8080/settings/latest');
             if (!settingsResponse.ok) {
                 throw new Error('Failed to fetch the latest settings');
             }
             const settingsData = await settingsResponse.json();
             const maxTickets = settingsData.maxTickets;
+            const ticketPrice = settingsData.ticketPrice;
 
             const transactionsResponse = await fetch('http://localhost:8080/transactions/totals');
             if (!transactionsResponse.ok) {
                 throw new Error('Failed to fetch the total released tickets');
             }
             const transactionsData = await transactionsResponse.json();
-            const totalReleased = transactionsData.released;
             const totalSold = transactionsData.sold;
-
             const unsoldTickets = transactionsData.unsold;
-            console.log(unsoldTickets);
 
-            // Validate the number of unsold tickets
-            if (unsoldTickets-ticketsToBuy < 0) {
+            if (unsoldTickets - ticketsToBuy < 0) {
                 setValidationMessage('Cannot buy tickets. No unsold tickets available.');
                 return;
             }
 
-            // Proceed with buying tickets
             const response = await fetch('http://localhost:8080/transactions', {
                 method: 'POST',
                 headers: {
@@ -55,6 +125,7 @@ function BuyerDashboard() {
                     userType: 'buyer',
                     ticketNo: parseInt(ticketsToBuy),
                     action: 'sold',
+                    username: username,
                 }),
             });
 
@@ -63,7 +134,7 @@ function BuyerDashboard() {
                 throw new Error(`Failed to buy tickets: ${errorMessage}`);
             }
 
-            setValidationMessage(`You have bought ${ticketsToBuy} tickets for a total cost of $${totalCost}.`);
+            setValidationMessage(`You have bought ${ticketsToBuy} tickets.`);
             setTicketsToBuy('');
             setTotalCost(null);
         } catch (error) {
@@ -72,9 +143,19 @@ function BuyerDashboard() {
         }
     };
 
+    const handleLogout = () => {
+        navigate('/buyer/login');
+    };
+
     return (
-        <div className="container">
+        <div className="container2">
             <h2 style={{ textAlign: 'center' }}>Buyer Dashboard</h2>
+            <div style={{ position: 'absolute', top: '10px', left: '400px', zIndex: 1 }}>
+                <Button onClick={handleLogout} className="primary">
+                    Logout
+                </Button>
+            </div>
+            <h3 style={{ textAlign: 'center' }}>Welcome, {username}</h3>
             <form onSubmit={(e) => { e.preventDefault(); handleBuyTickets(); }}>
                 <InputField
                     label="Number of Tickets to Buy"
@@ -104,6 +185,21 @@ function BuyerDashboard() {
                     {validationMessage}
                 </div>
             )}
+            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ width: '300px', height: '300px' }}>
+                    <Pie
+                        data={chartData}
+                        options={{
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                },
+                            },
+                        }}
+                    />
+                </div>
+            </div>
         </div>
     );
 }

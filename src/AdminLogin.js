@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from './components/AuthForm';
 import './styles.css';
+import Button from "./components/Button";
 
 
 function AdminLogin() {
@@ -27,7 +28,17 @@ function AdminLogin() {
         navigate('/admin/dashboard', { state: { adminId } });
     };
 
-    return <AuthForm type="login" title="Admin Login" onSubmit={handleLogin} />;
+    return (
+        <div>
+            <AuthForm type="login" title="Admin Login" onSubmit={handleLogin} />
+            <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                <p>Don't have an account?</p>
+                <Button onClick={() => navigate('/admin/register')} className="primary">
+                    Register
+                </Button>
+            </div>
+        </div>
+    );
 }
 
 export default AdminLogin;

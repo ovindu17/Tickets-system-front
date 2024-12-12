@@ -1,6 +1,5 @@
-// src/AdminSettings.js
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import InputField from './components/InputField';
 import Button from './components/Button';
 
@@ -13,6 +12,33 @@ function AdminSettings() {
     const [buyingRate, setBuyingRate] = useState('');
     const [ticketPrice, setTicketPrice] = useState('');
     const [validationMessage, setValidationMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!adminId) {
+            navigate('/admin/login');
+            return;
+        }
+
+        const fetchLatestSettings = async () => {
+            try {
+                const response = await fetch('http://localhost:8080/settings/latest');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch the latest settings');
+                }
+                const data = await response.json();
+                setMaxTickets(data.maxTickets);
+                setReleaseRate(data.releaseRate);
+                setBuyingRate(data.buyingRate);
+                setTicketPrice(data.ticketPrice);
+            } catch (error) {
+                console.error('Error fetching latest settings:', error);
+            }
+        };
+
+        fetchLatestSettings();
+    }, [adminId, navigate]);
 
     const handleSave = async () => {
         if (parseInt(releaseRate) > parseInt(maxTickets)) {
@@ -20,9 +46,10 @@ function AdminSettings() {
             return;
         }
         setValidationMessage('');
+        setSuccessMessage('');
 
         try {
-            const response = await fetch(`http://localhost:8080/settings`, {
+            const response = await fetch('http://localhost:8080/settings', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -33,7 +60,6 @@ function AdminSettings() {
                     buyingRate: parseInt(buyingRate),
                     ticketPrice: parseInt(ticketPrice),
                     adminId: parseInt(adminId),
-
                 }),
             });
 
@@ -42,12 +68,15 @@ function AdminSettings() {
                 throw new Error(`Failed to update admin settings: ${errorMessage}`);
             }
 
-            console.log('Admin settings updated successfully');
-            console.log(adminId)    ;
+            setSuccessMessage('Settings updated successfully.');
         } catch (error) {
             console.error(error.message);
             setValidationMessage(error.message);
         }
+    };
+
+    const handleBack = () => {
+        navigate('/admin/dashboard', { state: { adminId } });
     };
 
     return (
@@ -74,6 +103,11 @@ function AdminSettings() {
                         {validationMessage}
                     </div>
                 )}
+                {successMessage && (
+                    <div style={{ color: 'green', marginBottom: '10px' }}>
+                        {successMessage}
+                    </div>
+                )}
                 <InputField
                     label="Buying Rate"
                     type="number"
@@ -94,6 +128,11 @@ function AdminSettings() {
                     </Button>
                 </div>
             </form>
+            <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                <Button type="button" onClick={handleBack} className="secondary">
+                    Back
+                </Button>
+            </div>
         </div>
     );
 }
