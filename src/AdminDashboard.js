@@ -8,6 +8,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function AdminDashboard() {
+    // Initializing state variables
     const [ticketsToRelease, setTicketsToRelease] = useState('');
     const [releasedMessage, setReleasedMessage] = useState('');
     const [chartData, setChartData] = useState({
@@ -24,12 +25,14 @@ function AdminDashboard() {
     const location = useLocation();
     const adminId = location.state?.adminId;
 
+    // Checking if adminId is present, if not, navigating to login page
     useEffect(() => {
         if (!adminId) {
             navigate('/admin/login');
             return;
         }
 
+        // Fetching username based on adminId
         const fetchUsername = async () => {
             try {
                 const response = await fetch(`http://localhost:8080/admins/${adminId}`);
@@ -46,6 +49,7 @@ function AdminDashboard() {
         fetchUsername();
     }, [adminId, navigate]);
 
+    // Fetching transactions periodically
     useEffect(() => {
         const fetchTransactions = async () => {
             try {
@@ -66,6 +70,7 @@ function AdminDashboard() {
         return () => clearInterval(interval);
     }, []);
 
+    // Fetching chart data periodically
     useEffect(() => {
         const interval = setInterval(() => {
             Promise.all([
@@ -88,6 +93,7 @@ function AdminDashboard() {
         return () => clearInterval(interval);
     }, []);
 
+    // Handling ticket release
     const handleRelease = async () => {
         try {
             const settingsResponse = await fetch('http://localhost:8080/settings/latest');
@@ -141,6 +147,7 @@ function AdminDashboard() {
         }
     };
 
+    // Handling logout
     const handleLogout = () => {
         navigate('/admin/login');
     };

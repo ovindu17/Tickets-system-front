@@ -1,10 +1,7 @@
-// src/AdminLogin.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from './components/AuthForm';
-import './styles.css';
-import Button from "./components/Button";
-
+import Button from './components/Button';
 
 function AdminLogin() {
     const navigate = useNavigate();
@@ -35,6 +32,11 @@ function AdminLogin() {
                 <p>Don't have an account?</p>
                 <Button onClick={() => navigate('/admin/register')} className="primary">
                     Register
+                </Button>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                <Button onClick={() => navigate('/')} className="secondary">
+                    Back
                 </Button>
             </div>
         </div>

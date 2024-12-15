@@ -8,6 +8,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function BuyerDashboard() {
+    // Initializing state variables
     const [ticketsToBuy, setTicketsToBuy] = useState('');
     const [totalCost, setTotalCost] = useState(null);
     const [validationMessage, setValidationMessage] = useState('');
@@ -20,18 +21,21 @@ function BuyerDashboard() {
         }]
     });
     const [username, setUsername] = useState('');
-    const [ticketPrice, setTicketPrice] = useState(50); // Default ticket price
+    const [ticketPrice, setTicketPrice] = useState(50); // Setting default ticket price
+    const [buyingRate, setBuyingRate] = useState(0); // Initializing buying rate
 
     const navigate = useNavigate();
     const location = useLocation();
     const buyerId = location.state?.buyerId;
 
+    // Checking if buyerId is present, if not, navigating to login page
     useEffect(() => {
         if (!buyerId) {
             navigate('/buyer/login');
             return;
         }
 
+        // Fetching chart data and ticket price periodically
         const fetchChartData = async () => {
             try {
                 const settingsResponse = await fetch('http://localhost:8080/settings/latest');
@@ -39,8 +43,8 @@ function BuyerDashboard() {
                     throw new Error('Failed to fetch the latest settings');
                 }
                 const settingsData = await settingsResponse.json();
-                setTicketPrice(settingsData.ticketPrice);
-                console.log(settingsData.ticketPrice)//; Set ticket price from settings
+                setTicketPrice(settingsData.ticketPrice); // Setting ticket price from settings
+                setBuyingRate(settingsData.buyingRate); // Setting buying rate from settings
 
                 const transactionsResponse = await fetch('http://localhost:8080/transactions/totals');
                 if (!transactionsResponse.ok) {
@@ -69,6 +73,7 @@ function BuyerDashboard() {
         return () => clearInterval(interval);
     }, [buyerId, navigate]);
 
+    // Fetching username based on buyerId
     useEffect(() => {
         const fetchUsername = async () => {
             try {
@@ -88,11 +93,13 @@ function BuyerDashboard() {
         }
     }, [buyerId]);
 
+    // Calculating total cost based on tickets to buy
     const handleShowCost = () => {
         const cost = ticketsToBuy * Number(ticketPrice);
         setTotalCost(cost);
     };
 
+    // Handling ticket purchase
     const handleBuyTickets = async () => {
         try {
             const settingsResponse = await fetch('http://localhost:8080/settings/latest');
@@ -102,6 +109,7 @@ function BuyerDashboard() {
             const settingsData = await settingsResponse.json();
             const maxTickets = settingsData.maxTickets;
             const ticketPrice = settingsData.ticketPrice;
+            const buyingRate = settingsData.buyingRate;
 
             const transactionsResponse = await fetch('http://localhost:8080/transactions/totals');
             if (!transactionsResponse.ok) {
@@ -110,6 +118,11 @@ function BuyerDashboard() {
             const transactionsData = await transactionsResponse.json();
             const totalSold = transactionsData.sold;
             const unsoldTickets = transactionsData.unsold;
+
+            if (ticketsToBuy > buyingRate) {
+                setValidationMessage(`Cannot buy more than ${buyingRate} tickets at a time.`);
+                return;
+            }
 
             if (unsoldTickets - ticketsToBuy < 0) {
                 setValidationMessage('Cannot buy tickets. No unsold tickets available.');
@@ -143,6 +156,7 @@ function BuyerDashboard() {
         }
     };
 
+    // Handling logout
     const handleLogout = () => {
         navigate('/buyer/login');
     };
@@ -155,7 +169,6 @@ function BuyerDashboard() {
                     Logout
                 </Button>
             </div>
-            <h3 style={{ textAlign: 'center' }}>Welcome, {username}</h3>
             <form onSubmit={(e) => { e.preventDefault(); handleBuyTickets(); }}>
                 <InputField
                     label="Number of Tickets to Buy"

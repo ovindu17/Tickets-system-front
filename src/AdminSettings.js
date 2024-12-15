@@ -4,9 +4,11 @@ import InputField from './components/InputField';
 import Button from './components/Button';
 
 function AdminSettings() {
+    // Getting the location and adminId from the state
     const location = useLocation();
     const adminId = location.state?.adminId;
 
+    // Initializing state variables
     const [maxTickets, setMaxTickets] = useState('');
     const [releaseRate, setReleaseRate] = useState('');
     const [buyingRate, setBuyingRate] = useState('');
@@ -15,12 +17,14 @@ function AdminSettings() {
     const [successMessage, setSuccessMessage] = useState('');
     const navigate = useNavigate();
 
+    // Checking if adminId is present, if not, navigating to login page
     useEffect(() => {
         if (!adminId) {
             navigate('/admin/login');
             return;
         }
 
+        // Fetching the latest settings
         const fetchLatestSettings = async () => {
             try {
                 const response = await fetch('http://localhost:8080/settings/latest');
@@ -40,6 +44,7 @@ function AdminSettings() {
         fetchLatestSettings();
     }, [adminId, navigate]);
 
+    // Handling the save action
     const handleSave = async () => {
         if (parseInt(releaseRate) > parseInt(maxTickets)) {
             setValidationMessage('Release rate cannot be greater than the maximum number of tickets.');
@@ -75,6 +80,7 @@ function AdminSettings() {
         }
     };
 
+    // Handling the back action
     const handleBack = () => {
         navigate('/admin/dashboard', { state: { adminId } });
     };

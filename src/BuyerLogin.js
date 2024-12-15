@@ -1,4 +1,3 @@
-// src/BuyerLogin.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from './components/AuthForm';
@@ -33,6 +32,11 @@ function BuyerLogin() {
                 <p>Don't have an account?</p>
                 <Button onClick={() => navigate('/buyer/register')} className="primary">
                     Register
+                </Button>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                <Button onClick={() => navigate('/')} className="secondary">
+                    Back
                 </Button>
             </div>
         </div>
